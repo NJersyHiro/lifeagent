@@ -13,8 +13,11 @@ export default function Navigation() {
                     <Link href="/" className="hover:text-gray-300">
                         ホーム
                     </Link>
+                    <Link href="/emails/check" className="hover:text-gray-300 bg-red-600 px-3 py-1 rounded">
+                        📧 新着メール確認
+                    </Link>
                     <Link href="/emails" className="hover:text-gray-300">
-                        メール
+                        メール一覧
                     </Link>
                     <Link href="/expenses" className="hover:text-gray-300">
                         支出

@@ -13,7 +13,6 @@ type ExpenseRow = {
 
 export async function GET() {
     try {
-        // @ts-expect-error Prisma client types are generated at build time
         const expenses = await prisma.expense.findMany({
             orderBy: { date: 'desc' },
         })

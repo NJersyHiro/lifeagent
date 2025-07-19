@@ -93,9 +93,10 @@ export default function EmailsPage() {
             ) : (
                 <div className="space-y-2">
                     {emails.map(email => (
-                        <div
+                        <a
                             key={email.id}
-                            className={`p-4 border rounded-lg ${
+                            href={`/emails/${email.id}`}
+                            className={`block p-4 border rounded-lg hover:shadow-md transition-shadow ${
                                 email.isRead ? 'bg-white' : 'bg-blue-50 border-blue-300'
                             }`}
                         >
@@ -117,7 +118,7 @@ export default function EmailsPage() {
                             <p className="text-gray-700 truncate">
                                 {email.snippet}
                             </p>
-                        </div>
+                        </a>
                     ))}
                 </div>
             )}

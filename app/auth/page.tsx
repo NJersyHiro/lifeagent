@@ -1,6 +1,7 @@
 'use client'
 
 import { useSession, signIn, signOut } from 'next-auth/react'
+import Link from 'next/link'
 
 export default function AuthPage() {
     const { data: session, status } = useSession()
@@ -42,13 +43,13 @@ export default function AuthPage() {
                         </button>
 
                         <div className="pt-4 border-t space-y-2">
-                            <a
+                            <Link
                                 href="/emails"
                                 className="block w-full bg-blue-500 text-white px-4 py-2 rounded-md 
                                     hover:bg-blue-600 transition-colors text-center"
                             >
                                 メール一覧へ
-                            </a>
+                            </Link>
                             <a
                                 href="/api/gmail/fetch"
                                 className="block w-full bg-green-500 text-white px-4 py-2 rounded-md 

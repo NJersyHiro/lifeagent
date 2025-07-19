@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
-import { authOptions } from '../../auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 
 export async function GET() {
     try {
@@ -11,7 +11,6 @@ export async function GET() {
             return NextResponse.json({ error: '認証が必要です' }, { status: 401 })
         }
 
-        // @ts-expect-error Prisma client types are generated at build time
         const emails = await prisma.email.findMany({
             orderBy: { date: 'desc' },
             take: 100, // 最新100件を取得

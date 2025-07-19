@@ -10,7 +10,6 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: '全フィールドが必須です' }, { status: 400 })
         }
 
-        // @ts-expect-error Prisma client types are generated at build time
         const saved = await prisma.expense.create({
             data: {
                 date: new Date(date),
@@ -30,7 +29,6 @@ export async function POST(req: NextRequest) {
 // 一覧取得
 export async function GET() {
     try {
-        // @ts-expect-error Prisma client types are generated at build time
         const all = await prisma.expense.findMany({
             orderBy: { date: 'desc' },
         })

@@ -88,7 +88,6 @@ export async function GET(req: NextRequest) {
                 const labels = messageDetail.data.labelIds?.join(',') || ''
 
                 // データベースに保存（重複チェック付き）
-                // @ts-expect-error Prisma client types are generated at build time
                 const email = await prisma.email.upsert({
                     where: { messageId: message.id! },
                     update: {

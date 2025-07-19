@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { google } from 'googleapis'
 import { prisma } from '@/lib/prisma'
-import { authOptions } from '../../auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
         // セッションの確認
         const session = await getServerSession(authOptions)
@@ -14,6 +14,14 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ 
                 error: '認証が必要です。再度ログインしてください。',
                 session: session 
+            }, { status: 401 })
+        }
+
+        // Check if there's an authentication error
+        if (session.error === "RefreshAccessTokenError") {
+            return NextResponse.json({ 
+                error: 'トークンの更新に失敗しました。再度ログインしてください。',
+                details: 'Token refresh failed'
             }, { status: 401 })
         }
 
@@ -31,10 +39,10 @@ export async function GET(req: NextRequest) {
         // Gmail APIクライアントの初期化
         const gmail = google.gmail({ version: 'v1', auth: oauth2Client })
 
-        // 最新のメールを取得（過去24時間）
-        const yesterday = new Date()
-        yesterday.setDate(yesterday.getDate() - 1)
-        const query = `after:${Math.floor(yesterday.getTime() / 1000)}`
+        // 最新のメールを取得（過去1時間）
+        const oneHourAgo = new Date()
+        oneHourAgo.setHours(oneHourAgo.getHours() - 1)
+        const query = `after:${Math.floor(oneHourAgo.getTime() / 1000)} is:unread`
 
         const response = await gmail.users.messages.list({
             userId: 'me',
@@ -84,7 +92,6 @@ export async function GET(req: NextRequest) {
                 const labels = messageDetail.data.labelIds?.join(',') || ''
 
                 // データベースに保存（重複チェック付き）
-                // @ts-expect-error Prisma client types are generated at build time
                 const email = await prisma.email.upsert({
                     where: { messageId: message.id! },
                     update: {
@@ -107,6 +114,31 @@ export async function GET(req: NextRequest) {
                 savedEmails.push(email)
             } catch (error) {
                 console.error(`Error processing message ${message.id}:`, error)
+            }
+        }
+
+        // 本当に新しいメール（createdAtが現在時刻に近い）のみWebhookを呼び出す
+        if (savedEmails.length > 0) {
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
+            const trulyNewEmails = savedEmails.filter(email => 
+                !email.isRead && new Date(email.createdAt) > fiveMinutesAgo
+            )
+            
+            if (trulyNewEmails.length > 0) {
+                // 最新の未読メールのみWebhookを呼び出す
+                const latestUnreadEmail = trulyNewEmails[0]
+                try {
+                    await fetch(`${process.env.NEXTAUTH_URL}/api/emails/webhook`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            emailId: latestUnreadEmail.id,
+                            action: 'new_email'
+                        })
+                    })
+                } catch (error) {
+                    console.error('Error calling webhook:', error)
+                }
             }
         }
 

@@ -37,4 +37,17 @@ model Email {
   isRead    Boolean  @default(false)
   labels    String?  // JSON string of labels
   createdAt DateTime @default(now())
+  replyDrafts ReplyDraft[]
+}
+
+model ReplyDraft {
+  id        String   @id @default(cuid())
+  emailId   String
+  email     Email    @relation(fields: [emailId], references: [id])
+  content   String
+  instruction String? // LLMへの指示
+  approved  Boolean  @default(false)
+  sent      Boolean  @default(false)
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
 }
