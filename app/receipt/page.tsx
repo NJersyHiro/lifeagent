@@ -49,7 +49,6 @@ export default function ReceiptPage() {
                 <pre className="mt-4 p-2 bg-gray-100">{ocrResult}</pre>
             )}
 
-            {/* ↓ ここに挿入 ↓ */}
             {parsedResult && (
                 <div className="mt-4 p-4 bg-green-100 rounded">
                     <h2 className="font-bold mb-2">抽出結果（確認）</h2>
@@ -57,6 +56,20 @@ export default function ReceiptPage() {
                     <p>項目: {parsedResult.item}</p>
                     <p>金額: {parsedResult.amount}円</p>
                     <p>勘定科目: {parsedResult.category}</p>
+                    <button
+                        className="mt-2 bg-emerald-600 text-white px-4 py-2 rounded"
+                        onClick={async () => {
+                            const res = await fetch('/api/expense', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(parsedResult),
+                            })
+                            const json = await res.json()
+                            alert('保存しました: ' + json.item)
+                        }}
+                    >
+                        保存する
+                    </button>
                 </div>
             )}
         </main>
