@@ -42,6 +42,14 @@ export default function ExpensesPage() {
                     ))}
                 </tbody>
             </table>
+            <a
+                href="/api/expense/export"
+                className="inline-block mb-4 bg-blue-600 text-white px-4 py-2 rounded"
+                download
+            >
+                CSVでダウンロード
+            </a>
+
         </main>
     )
 }

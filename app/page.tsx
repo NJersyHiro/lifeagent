@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 export default function Home() {
   const [input, setInput] = useState('')
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<{ type: string; title: string; date?: string; time?: string } | null>(null)
 
   const handleSubmit = async () => {
     const res = await fetch('/api/parse', {

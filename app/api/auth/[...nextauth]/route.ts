@@ -8,7 +8,7 @@ export const authOptions: NextAuthOptions = {
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
             authorization: {
                 params: {
-                    scope: 'openid email profile https://www.googleapis.com/auth/calendar.events',
+                    scope: 'openid email profile https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send',
                 },
             },
         }),
@@ -17,13 +17,18 @@ export const authOptions: NextAuthOptions = {
         async jwt({ token, account }) {
             if (account) {
                 token.access_token = account.access_token
+                token.refresh_token = account.refresh_token
+                token.expires_at = account.expires_at
             }
             return token
         },
         async session({ session, token }) {
-            session.access_token = token.access_token
+            session.access_token = token.access_token as string
             return session
         },
+    },
+    session: {
+        strategy: 'jwt',
     },
 }
 

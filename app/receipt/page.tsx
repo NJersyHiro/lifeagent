@@ -5,7 +5,7 @@ import { useState } from 'react'
 export default function ReceiptPage() {
     const [image, setImage] = useState<File | null>(null)
     const [ocrResult, setOcrResult] = useState('')
-    const [parsedResult, setParsedResult] = useState<any>(null)
+    const [parsedResult, setParsedResult] = useState<{ date: string; item: string; amount: number; category: string } | null>(null)
 
     const handleOcrAndParse = async () => {
         if (!image) return

@@ -1,0 +1,94 @@
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'; // authOptionsのパスを修正
+import { google } from 'googleapis';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+// メール本文をデコードして取得するヘルパー関数
+function getBody(payload: any): string {
+  if (payload.body?.data) {
+    return Buffer.from(payload.body.data, 'base64').toString('utf-8');
+  }
+  if (payload.parts) {
+    // multipart/alternative の場合、text/plain を優先する
+    const plainPart = payload.parts.find(part => part.mimeType === 'text/plain');
+    if (plainPart && plainPart.body?.data) {
+      return Buffer.from(plainPart.body.data, 'base64').toString('utf-8');
+    }
+    // text/html しかない場合
+    const htmlPart = payload.parts.find(part => part.mimeType === 'text/html');
+    if (htmlPart && htmlPart.body?.data) {
+      // 簡単なタグ除去（より正確な処理にはライブラリを推奨）
+      const htmlText = Buffer.from(htmlPart.body.data, 'base64').toString('utf-8');
+      return htmlText.replace(/<[^>]*>?/gm, '');
+    }
+  }
+  return '';
+}
+
+export async function GET() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.accessToken) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+  }
+
+  const auth = new google.auth.OAuth2();
+  auth.setCredentials({ access_token: session.accessToken });
+
+  const gmail = google.gmail({ version: 'v1', auth });
+
+  try {
+    // 1. 未読メールのIDリストを取得 (is:unread)
+    const listResponse = await gmail.users.messages.list({
+      userId: 'me',
+      q: 'is:unread', // 未読メールを検索
+      maxResults: 5,   // 一度に処理する数を制限
+    });
+
+    const messages = listResponse.data.messages;
+    if (!messages || messages.length === 0) {
+      return NextResponse.json({ message: 'No new unread emails.' });
+    }
+
+    // 2. 各メールの詳細を取得してDBに保存
+    for (const message of messages) {
+      if (!message.id) continue;
+
+      // DBに同じmessageIdが存在するか確認
+      const existingDraft = await prisma.emailDraft.findFirst({
+        where: { messageId: message.id },
+      });
+      if (existingDraft) continue; // 存在すればスキップ
+
+      const msgResponse = await gmail.users.messages.get({
+        userId: 'me',
+        id: message.id,
+      });
+
+      const headers = msgResponse.data.payload?.headers;
+      const subject = headers?.find(h => h.name === 'Subject')?.value || '';
+      const from = headers?.find(h => h.name === 'From')?.value || '';
+      const body = getBody(msgResponse.data.payload);
+
+      // 3. Prismaを使ってDBに保存
+      await prisma.emailDraft.create({
+        data: {
+          messageId: message.id,
+          from: from,
+          subject: subject,
+          body: body,
+          replyDraft: '', // この時点では空
+        },
+      });
+    }
+
+    return NextResponse.json({ message: 'Successfully fetched and saved emails.' });
+
+  } catch (error) {
+    console.error('Error fetching gmail:', error);
+    return NextResponse.json({ error: 'Failed to fetch emails' }, { status: 500 });
+  }
+}

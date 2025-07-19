@@ -58,8 +58,9 @@ JSON以外の、いかなる説明文やマークダウン(\`\`\`)も絶対に�
 
         return NextResponse.json(parsed);
 
-    } catch (err: any) {
+    } catch (err) {
         console.error("解析中にエラーが発生しました:", err);
-        return NextResponse.json({ error: '解析に失敗しました', message: err.message }, { status: 500 });
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        return NextResponse.json({ error: '解析に失敗しました', message }, { status: 500 });
     }
 }

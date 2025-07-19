@@ -62,8 +62,9 @@ ${text}
 
         return NextResponse.json(parsed)
 
-    } catch (err: any) {
+    } catch (err) {
         console.error("解析中にエラーが発生しました:", err)
-        return NextResponse.json({ error: 'LLM処理失敗', message: err.message }, { status: 500 })
+        const message = err instanceof Error ? err.message : 'Unknown error'
+        return NextResponse.json({ error: 'LLM処理失敗', message }, { status: 500 })
     }
 }

@@ -23,3 +23,18 @@ model Expense {
   category  String
   createdAt DateTime @default(now())
 }
+
+model Email {
+  id        String   @id @default(cuid())
+  messageId String   @unique
+  threadId  String
+  from      String
+  to        String
+  subject   String
+  body      String?
+  snippet   String?
+  date      DateTime
+  isRead    Boolean  @default(false)
+  labels    String?  // JSON string of labels
+  createdAt DateTime @default(now())
+}
