@@ -10,7 +10,9 @@ export default function Home() {
       method: 'POST',
       body: JSON.stringify({ text: input }),
     })
+
     const json = await res.json()
+
     if (json.type === 'event') {
       await fetch('/api/calendar/add', {
         method: 'POST',
@@ -21,6 +23,18 @@ export default function Home() {
           time: json.time,
         }),
       })
+    }
+
+    if (json.type === 'todo') {
+      await fetch('/api/todo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: json.title,
+          date: json.date || null,
+        }),
+      })
+      alert('ToDoを登録しました')
     }
 
     setResult(json)
