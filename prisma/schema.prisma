@@ -14,3 +14,12 @@ model Todo {
   createdAt DateTime @default(now())
   completed Boolean  @default(false)
 }
+
+model Expense {
+  id        String   @id @default(cuid())
+  date      DateTime
+  item      String
+  amount    Int
+  category  String
+  createdAt DateTime @default(now())
+}
