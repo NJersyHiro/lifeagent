@@ -22,3 +22,18 @@ export async function GET() {
     })
     return NextResponse.json(todos)
 }
+
+export async function PATCH(req: NextRequest) {
+    const { id, completed } = await req.json()
+
+    if (!id) {
+        return NextResponse.json({ error: 'IDが必要です' }, { status: 400 })
+    }
+
+    const updated = await prisma.todo.update({
+        where: { id },
+        data: { completed },
+    })
+
+    return NextResponse.json(updated)
+}
