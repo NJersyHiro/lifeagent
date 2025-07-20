@@ -10,6 +10,7 @@ export default function EmailMonitor() {
     const [lastCheck, setLastCheck] = useState<Date | null>(null)
     const [nextCheck, setNextCheck] = useState<Date | null>(null)
     const [isChecking, setIsChecking] = useState(false)
+    const [serverMonitoring, setServerMonitoring] = useState(true) // サーバー側の監視状態
     const intervalRef = useRef<NodeJS.Timeout | null>(null)
     const checkIntervalMs = 30 * 60 * 1000 // 30分
     const lastOpenedRef = useRef<string | null>(null)
@@ -18,6 +19,16 @@ export default function EmailMonitor() {
     // ローカルストレージから監視状態を復元
     useEffect(() => {
         isMounted.current = true
+        
+        // サーバー側の監視状態を確認
+        fetch('/api/gmail/status')
+            .then(res => res.json())
+            .then(data => {
+                if (data.serverMonitoring !== undefined) {
+                    setServerMonitoring(data.serverMonitoring)
+                }
+            })
+            .catch(err => console.error('Failed to fetch server monitoring status:', err))
         
         return () => {
             isMounted.current = false
@@ -182,6 +193,9 @@ export default function EmailMonitor() {
             
             <div className="text-xs space-y-1 mb-3">
                 <p>状態: {isChecking ? '🔄 確認中...' : isMonitoring ? '🟢 監視中' : '⚫ 停止中'}</p>
+                {serverMonitoring && (
+                    <p className="text-blue-600">🤖 サーバー自動監視: 有効</p>
+                )}
                 {lastCheck && (
                     <p>最終確認: {formatTime(lastCheck)}</p>
                 )}
@@ -212,7 +226,7 @@ export default function EmailMonitor() {
             )}
 
             <p className="text-xs text-gray-500 mt-2">
-                30分ごとに新着メールを確認
+                {serverMonitoring ? 'サーバーが自動監視中' : '30分ごとに新着メールを確認'}
             </p>
         </div>
     )

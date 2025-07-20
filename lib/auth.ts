@@ -1,7 +1,15 @@
 import { NextAuthOptions } from 'next-auth'
+import { JWT } from 'next-auth/jwt'
 import GoogleProvider from 'next-auth/providers/google'
 
-async function refreshAccessToken(token: any) {
+interface TokenWithGoogle extends JWT {
+    access_token?: string
+    refresh_token?: string
+    expires_at?: number
+    error?: string
+}
+
+async function refreshAccessToken(token: TokenWithGoogle) {
     try {
         const url = "https://oauth2.googleapis.com/token"
         const response = await fetch(url, {
